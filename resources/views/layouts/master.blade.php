@@ -7,10 +7,20 @@
         @include('partials.nav')
         <div class="container pt-5">
             <div class="row">
+                {{-- @php
+                    dd(session()->all());
+                @endphp --}}
                 @if (session()->has('success'))
                     <div class="col-12">
                         <div class="alert alert-success" role="alert">
                             {{ session('success') }}
+                        </div>
+                    </div>
+                @endif
+                @if (session()->has('danger'))
+                    <div class="col-12">
+                        <div class="alert alert-danger" role="alert">
+                            {{ session('danger') }}
                         </div>
                     </div>
                 @endif
