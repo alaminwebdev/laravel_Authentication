@@ -13,9 +13,7 @@
                         <label for="name" class="form-label">Name</label>
                         <input type="text" class="form-control" name="name" value="{{ old('name') }}">
                         @error('name')
-                            <span class="text-danger">
-                                {{ $message }}
-                            </span>
+                            <div class="form-text text-danger">{{ $message }}</div>
                         @enderror
                     </div>
                     <div class="mb-3">
@@ -23,27 +21,21 @@
                         <input type="email" class="form-control" name="email" value="{{ old('email') }}">
                         <div id="emailHelp" class="form-text">We'll never share your email with anyone else.</div>
                         @error('email')
-                            <span class="text-danger">
-                                {{ $message }}
-                            </span>
+                            <div class="form-text text-danger">{{ $message }}</div>
                         @enderror
                     </div>
                     <div class="mb-3">
                         <label for="password" class="form-label">Password</label>
                         <input type="password" class="form-control" name="password">
                         @error('password')
-                            <span class="text-danger">
-                                {{ $message }}
-                            </span>
+                            <div class="form-text text-danger">{{ $message }}</div>
                         @enderror
                     </div>
                     <div class="mb-3">
                         <label for="retype_password" class="form-label">Retype Password</label>
                         <input type="password" class="form-control" name="retype_password">
                         @error('password')
-                            <span class="text-danger">
-                                {{ $message }}
-                            </span>
+                            <div class="form-text text-danger">{{ $message }}</div>
                         @enderror
                     </div>
                     <button type="submit" class="btn btn-primary">Submit</button>

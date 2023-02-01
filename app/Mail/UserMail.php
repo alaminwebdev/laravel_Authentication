@@ -50,7 +50,7 @@ class UserMail extends Mailable
     public function content()
     {
         return new Content(
-            view: 'email_body',
+            view: 'users.email_body',
             with:[
                 'emailSubject' => $this->subject,
                 'emailBody' => $this->body

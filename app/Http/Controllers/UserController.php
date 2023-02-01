@@ -9,19 +9,19 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 
-class UserControllerr extends Controller
+class UserController extends Controller
 {
     public function index()
     {
-        return view('home');
+        return view('users.home');
     }
     public function dashboard()
     {
-        return view('dashboard');
+        return view('users.dashboard');
     }
     public function login()
     {
-        return view('login');
+        return view('users.login');
     }
     public function login_submit(Request $request)
     {
@@ -32,6 +32,7 @@ class UserControllerr extends Controller
         ]);
         if (Auth::attempt($credentials)) {
             $request->session()->regenerate();
+            $request->session()->put('email',$request->email);
             // $user = Auth::user();
             // echo $user;
             return redirect()->route('dashboard');
@@ -43,7 +44,7 @@ class UserControllerr extends Controller
 
     public function registration()
     {
-        return view('registration');
+        return view('users.registration');
     }
     public function registration_submit(Request $request)
     {
@@ -51,9 +52,13 @@ class UserControllerr extends Controller
         $request->validate([
             'name' => 'required',
             'email' => 'required|email',
-            'password' => 'required',
+            'password' => 'required|min:5',
             'retype_password' => 'required'
         ]);
+        $users = User::where('email',$request->email)->first();
+        if($users){
+            return redirect()->back()->with('danger', 'Email are already exist !'); 
+        }
         //generate a hash value as token from user plaintext name
         $token = hash('sha256', $request->name);
 
@@ -70,7 +75,7 @@ class UserControllerr extends Controller
         $subject = 'Registration confirmation';
         $message = $verification_url;
         Mail::to($request->email)->send(new UserMail($subject, $message));
-        echo "Email is sent";
+        return redirect()->route('home')->with('success', 'Verification link are send successfully , Please verify.');
     }
     public function registration_verify($token, $email)
     {
@@ -87,7 +92,7 @@ class UserControllerr extends Controller
 
     public function forget_password()
     {
-        return view('forget_password');
+        return view('users.forget_password');
     }
     public function forget_password_submit(Request $request)
     {
@@ -110,13 +115,13 @@ class UserControllerr extends Controller
         return redirect()->back()->with('success','Password reset email are sent successfully ! Please check your mail.');
 
     }
-    
+
     public function reset_password($token,$email){
         $user = User::where('token', $token)->where('email', $email)->first();
         if(!$user){
             return redirect()->route('login')->with('danger', 'Sorry ! This link are not valid !');
         }else{
-            return view('reset_password', compact('token', 'email'));
+            return view('users.reset_password', compact('token', 'email'));
         }
         
 
