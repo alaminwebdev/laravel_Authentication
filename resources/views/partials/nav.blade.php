@@ -7,37 +7,60 @@
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
             <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
                 <li class="nav-item">
-                    <a class="nav-link  {{ request()->routeIs('home') ? 'active' : '' }} "
-                        href="{{ route('home') }}">
+                    <a class="nav-link  {{ request()->routeIs('home') ? 'active' : '' }} " href="{{ route('home') }}">
                         Home
                     </a>
                 </li>
-                @if (Auth::guard('web')->check())
-                <li class="nav-item">
-                    <a class="nav-link {{ request()->routeIs('dashboard*') ? 'active' : '' }} "
-                        href="{{ route('dashboard') }}">
-                        Dashboard
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link "
-                        href="{{ route('logout') }}">
-                        Logout
-                    </a>
-                </li>
-                @else
-                <li class="nav-item">
-                    <a class="nav-link {{ request()->routeIs('login*') ? 'active' : '' }} "
-                        href="{{ route('login') }}">
-                        Login
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link {{ request()->routeIs('registration*') ? 'active' : '' }} "
-                        href="{{ route('registration') }}">
-                        Registration
-                    </a>
-                </li>
+                @auth('web')
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->routeIs('dashboard*') ? 'active' : '' }} "
+                            href="{{ route('dashboard') }}">
+                            Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link " href="{{ route('logout') }}">
+                            Logout
+                        </a>
+                    </li>
+                @endauth
+
+                {{-- @if (Auth::guard('web')->check())
+                    The user is authenticated...
+                @endif --}}
+
+                @auth('admin')
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->routeIs('admin_dashboard*') ? 'active' : '' }} "
+                            href="{{ route('admin_dashboard') }}">
+                            Admin Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->routeIs('admin_settings*') ? 'active' : '' }} "
+                            href="{{ route('admin_settings') }}">
+                            Settings
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link " href="{{ route('admin_logout') }}">
+                            Logout
+                        </a>
+                    </li>
+                @endauth
+                @if (!Auth::guard('web')->check() && !Auth::guard('admin')->check())
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->routeIs('login*') ? 'active' : '' }} "
+                            href="{{ route('login') }}">
+                            Login
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->routeIs('registration*') ? 'active' : '' }} "
+                            href="{{ route('registration') }}">
+                            Registration
+                        </a>
+                    </li>
                 @endif
             </ul>
         </div>

@@ -21,6 +21,9 @@ class UserController extends Controller
     }
     public function login()
     {
+        if(Auth::guard('web')->check()){
+            return redirect()->route('dashboard');
+        }
         return view('users.login');
     }
     public function login_submit(Request $request)
@@ -44,6 +47,9 @@ class UserController extends Controller
 
     public function registration()
     {
+        if(Auth::guard('web')->check()){
+            return redirect()->route('dashboard');
+        }
         return view('users.registration');
     }
     public function registration_submit(Request $request)
