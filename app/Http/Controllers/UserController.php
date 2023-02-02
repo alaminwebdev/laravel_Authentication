@@ -21,7 +21,7 @@ class UserController extends Controller
     }
     public function login()
     {
-        if(Auth::guard('web')->check()){
+        if (Auth::guard('web')->check()) {
             return redirect()->route('dashboard');
         }
         return view('users.login');
@@ -29,25 +29,31 @@ class UserController extends Controller
     public function login_submit(Request $request)
     {
         //dd($request->input());
-        $credentials = $request->validate([
-            'email' => 'required|email',
-            'password' => 'required'
-        ]);
-        if (Auth::attempt($credentials)) {
-            $request->session()->regenerate();
-            $request->session()->put('email',$request->email);
-            // $user = Auth::user();
-            // echo $user;
-            return redirect()->route('dashboard');
+        if ($request->isMethod('get')) {
+            return redirect()->route('home');
+        } elseif ($request->isMethod('post')) {
+            $credentials = $request->validate([
+                'email' => 'required|email',
+                'password' => 'required'
+            ]);
+            if (Auth::attempt($credentials)) {
+                $request->session()->regenerate();
+                $request->session()->put('email', $request->email);
+                // $user = Auth::user();
+                // echo $user;
+                return redirect()->route('dashboard');
+            }
+            return back()->withErrors([
+                'email' => 'The provided credentials do not match our records.',
+            ])->onlyInput('email');
         }
-        return back()->withErrors([
-            'email' => 'The provided credentials do not match our records.',
-        ])->onlyInput('email');
+        // if the http method are without get and post
+        return redirect()->route('home');
     }
 
     public function registration()
     {
-        if(Auth::guard('web')->check()){
+        if (Auth::guard('web')->check()) {
             return redirect()->route('dashboard');
         }
         return view('users.registration');
@@ -55,33 +61,38 @@ class UserController extends Controller
     public function registration_submit(Request $request)
     {
         //dd($request->input());
-        $request->validate([
-            'name' => 'required',
-            'email' => 'required|email',
-            'password' => 'required|min:5',
-            'retype_password' => 'required'
-        ]);
-        $users = User::where('email',$request->email)->first();
-        if($users){
-            return redirect()->back()->with('danger', 'Email are already exist !'); 
+        $req_method = $request->method();
+        if ($req_method == 'post') {
+            $request->validate([
+                'name' => 'required',
+                'email' => 'required|email',
+                'password' => 'required|min:5',
+                'retype_password' => 'required'
+            ]);
+            $users = User::where('email', $request->email)->first();
+            if ($users) {
+                return redirect()->back()->with('danger', 'Email are already exist !');
+            }
+            //generate a hash value as token from user plaintext name
+            $token = hash('sha256', $request->name);
+
+            $data = new User();
+            $data->name = $request->name;
+            $data->email = $request->email;
+            $data->password = Hash::make($request->password);
+            $data->status = 'pending';
+            $data->token = $token;
+            $data->save();
+
+            $verification_url = url('registration/verify/' . $token . '/' . $request->email);
+            //dd($verification_url);
+            $subject = 'Registration confirmation';
+            $message = $verification_url;
+            Mail::to($request->email)->send(new UserMail($subject, $message));
+            return redirect()->route('home')->with('success', 'Verification link are send successfully , Please verify.');
         }
-        //generate a hash value as token from user plaintext name
-        $token = hash('sha256', $request->name);
-
-        $data = new User();
-        $data->name = $request->name;
-        $data->email = $request->email;
-        $data->password = Hash::make($request->password);
-        $data->status = 'pending';
-        $data->token = $token;
-        $data->save();
-
-        $verification_url = url('registration/verify/' . $token . '/' . $request->email);
-        //dd($verification_url);
-        $subject = 'Registration confirmation';
-        $message = $verification_url;
-        Mail::to($request->email)->send(new UserMail($subject, $message));
-        return redirect()->route('home')->with('success', 'Verification link are send successfully , Please verify.');
+        // if http method without post
+        return redirect()->route('home');
     }
     public function registration_verify($token, $email)
     {
@@ -103,45 +114,51 @@ class UserController extends Controller
     public function forget_password_submit(Request $request)
     {
         //dd($request->input());
-        $user = User::where('email', $request->email)->first();
-        if (!$user) {
-            return back()->withErrors([
-                'email' => 'The provided email do not match our records.',
-            ])->onlyInput('email');
+        if ($request->isMethod('post')) {
+            $user = User::where('email', $request->email)->first();
+            if (!$user) {
+                return back()->withErrors([
+                    'email' => 'The provided email do not match our records.',
+                ])->onlyInput('email');
+            }
+
+            $token = hash('sha256', 'resetpassword');
+            $user->token = $token;
+            $user->update();
+
+            $reset_url = url('reset/password/' . $token . '/' . $request->email);
+
+            $subject = 'Reset password';
+            Mail::to($request->email)->send(new UserMail($subject, $reset_url));
+            return redirect()->back()->with('success', 'Password reset email are sent successfully ! Please check your mail.');
         }
-
-        $token = hash('sha256', 'resetpassword');
-        $user->token = $token;
-        $user->update();
-
-        $reset_url = url('reset/password/'.$token.'/'.$request->email);
-
-        $subject = 'Reset password';
-        Mail::to($request->email)->send(new UserMail($subject,$reset_url));
-        return redirect()->back()->with('success','Password reset email are sent successfully ! Please check your mail.');
-
+        // if http method without post
+        return redirect()->route('home');
     }
 
-    public function reset_password($token,$email){
+    public function reset_password($token, $email)
+    {
         $user = User::where('token', $token)->where('email', $email)->first();
-        if(!$user){
+        if (!$user) {
             return redirect()->route('login')->with('danger', 'Sorry ! This link are not valid !');
-        }else{
+        } else {
             return view('users.reset_password', compact('token', 'email'));
         }
-        
-
     }
-    public function reset_password_submit(Request $request){
-        $request->validate([
-            'password' => 'required | min:5'
-        ]);
-        $user = User::where('token', $request->token)->where('email', $request->email)->first();
-        $user->token = '';
-        $user->password = Hash::make($request->password);
-        $user->update();
-        return redirect()->route('login')->with('success', 'Password reset successfully !');
-
+    public function reset_password_submit(Request $request)
+    {
+        if ($request->isMethod('post')) {
+            $request->validate([
+                'password' => 'required | min:5'
+            ]);
+            $user = User::where('token', $request->token)->where('email', $request->email)->first();
+            $user->token = '';
+            $user->password = Hash::make($request->password);
+            $user->update();
+            return redirect()->route('login')->with('success', 'Password reset successfully !');
+        }
+        // if http method without post
+        return redirect()->route('home');
     }
     public function logout()
     {
